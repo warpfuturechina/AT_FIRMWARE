@@ -22,10 +22,8 @@ git clone 项目，解压<strong>at_firmware_build.zip</strong>
 
 根据模块当前所在环境，获取串口并修改 `--port /dev/ttyUSB0`
 
+查看模块串口，可以在命令行工具输入:
 <br>
-
-> 查看模块串口，可以在命令行工具输入:
-> <br>
 > `cd /dev`
 > <br>
 > `ls -a`
