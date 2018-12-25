@@ -1,5 +1,4 @@
 #include <stdio.h>
-
 int RevDataProcess(unsigned short tag,unsigned short length,unsigned char* value);
 void rxSendData(unsigned char* value,unsigned char len);
 int Num2Char(unsigned char somechar){
@@ -101,17 +100,20 @@ unsigned char rATWDR[]="\r\n+WDR=";
 
 //串口读取的数据buffer
 #define RXLEN 50
-unsigned char rxData[RXLEN]="\r\n+WDR=16,\"000100020000000000000000\"\r\n"	;
+unsigned char rxData[RXLEN]="\r\n+WDR=05,\"0001000200\"\r\n"	;
 
 // TLV的V数据
-unsigned char tlvValue[8];//暂定长度4字节，有需要自己调整
+unsigned char tlvValue[8];//暂定长度，有需要自己调整
 
 int RevData(){
-	unsigned short tag = (HexStr2HexNum(rxData[11] , rxData[12])<<8)|(HexStr2HexNum(rxData[13] , rxData[14])&0xff);
-	unsigned short len = (HexStr2HexNum(rxData[15] , rxData[16])<<8)|(HexStr2HexNum(rxData[17] , rxData[18])&0xff);
+	unsigned short baseline =   (rxData[8] == ',' ? 0 : 1)  ;
+	unsigned short tag = (HexStr2HexNum(rxData[10+baseline] , rxData[11+baseline])<<8)|
+											(HexStr2HexNum(rxData[12+baseline] , rxData[13+baseline])&0xff);
+	unsigned short len = (HexStr2HexNum(rxData[14+baseline] , rxData[15+baseline])<<8)|
+											(HexStr2HexNum(rxData[16+baseline] , rxData[17+baseline])&0xff);
 	int i=0;
 	for(;i<len;i++){
-		tlvValue[i] = HexStr2HexNum(rxData[i*2+19] , rxData[i*2+20]);
+		tlvValue[i] = HexStr2HexNum(rxData[i*2+18+baseline] , rxData[i*2+19+baseline]);
 	}
 	i = RevDataProcess( tag, len, tlvValue );
 	return i;
@@ -149,7 +151,6 @@ int SetSendData(unsigned short tag,unsigned short length,unsigned char* value){
 	}
 	return 1;
 }
-
 
 void ModuleCompleteDataProcess(){
 	if(MatchCommand( rATWDR,rxData,7)){
@@ -212,7 +213,7 @@ int RevDataProcess(unsigned short tag,unsigned short length,unsigned char* value
 	printf("%d %d %x\n", tag, length , value[0]);
 	if(tag == 0x01){
 		SetSendData(3,5,"4FFFF");
-		rxSendData(tATWDS, 38 );//发送TLV上报数据
+		rxSendData(tATWDS, 38 ); //发送TLV上报数据
 	}
 	if(tag == 0x02){
 
@@ -221,7 +222,7 @@ int RevDataProcess(unsigned short tag,unsigned short length,unsigned char* value
 }
 
 int main(){
-	modulestate = PowerOnS;
+	modulestate = CompleteS;
 	printf("%s\n",rxData);
 
 	ModuleProcess();
