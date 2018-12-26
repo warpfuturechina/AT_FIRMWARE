@@ -40,7 +40,7 @@ partitions_two_ota.bin `0x8000`
 
 查看模块串口，假设模块串口为`tty.SLAB_USBtoUART`, 将 `flash.sh` 修改为：
 
-`python2 $IDF_PATH/components/esptool_py/esptool/esptool.py --chip esp8266 --port /dev/tty.SLAB_USBtoUART --baud 115200 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size 8MB 0x0000 bootloader.bin 0x10000 wf_at_firmware.bin 0x8000 partitions_two_ota.bin`
+`python2 $IDF_PATH/components/esptool_py/esptool/esptool.py --chip esp8266 --port /dev/tty.SLAB_USBtoUART --baud 115200 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size 2MB 0x0000 bootloader.bin 0x10000 wf_at_firmware.bin 0x8000 partitions_two_ota.bin`
 
 保持并退出。
 
