@@ -16,11 +16,21 @@ git clone 项目，解压<strong>at_firmware_build.zip</strong>
 
 打开`flash.sh`文件，如下所示：
 
-`python2 $IDF_PATH/components/esptool_py/esptool/esptool.py --chip esp8266 --port /dev/ttyUSB0 --baud 115200 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size 8MB 0x0000 bootloader.bin 0x10000 wf_at_firmware.bin 0x8000 partitions_two_ota.bin`
+`python2 /home/zhsyourai/esp/ESP8266_RTOS_SDK/components/esptool_py/esptool/esptool.py --chip esp8266 --port /dev/ttyUSB0 --baud 115200 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size 2MB 0x0000 /home/zhsyourai/projects/wf_at_firmware/build/bootloader/bootloader.bin 0x10000 /home/zhsyourai/projects/wf_at_firmware/build/wf_at_firmware.bin 0x8000 /home/zhsyourai/projects/wf_at_firmware/build/partitions_two_ota.bin`
 
 修改串口：
 
 根据模块当前所在环境，获取串口并修改 `--port /dev/ttyUSB0`
+
+波特率 `--baud 115200`
+
+flash 大小 `--flash_size 2MB`
+
+bootloader.bin `0x0000`
+
+wf_at_firmware.bin `0x10000`
+
+partitions_two_ota.bin `0x8000`
 
 查看模块串口，可以在命令行工具输入:
 <br>
