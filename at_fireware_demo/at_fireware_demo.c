@@ -1,3 +1,7 @@
+/**
+@author kj021320
+@version 3.1
+**/
 #include <stdio.h>
 int RevDataProcess(unsigned short tag,unsigned short length,unsigned char* value);
 void rxSendData(unsigned char* value,unsigned char len);
@@ -80,7 +84,7 @@ enum ModuleStateEnum{
 enum ModuleStateEnum modulestate=PowerOnS;
 //串口发送数据指令帧
 unsigned char tATWPPID[]="AT+WPPID=\"<PID>\"\r";
-unsigned char tATWPPK[]="AT+WPPK=\"<PKEY>\"\r";
+unsigned char tATWPPK[]="AT+WPPK=\"b784118c-a9bf-4720-81f5-4dc7154cd23a\"\r";
 unsigned char tATWCSAS[]="AT+WCS=\"AIRKISS\"\r";
 unsigned char tATWCSAP[]="AT+WCS=\"AP\"\r";
 unsigned char tATWCC[]="AT+WCC\r";
@@ -187,7 +191,7 @@ void ModuleProcess(){
 	//}
 	if(modulestate == PidS){
 		if(MatchCommand( rATOK,rxData,6)){
-			rxSendData(tATWPPK,46);
+			rxSendData(tATWPPK,47);
 			modulestate=PkS;
 		}else{
 			rxSendData(tATWPPID,44);
@@ -198,7 +202,7 @@ void ModuleProcess(){
 		if(MatchCommand( rATOK,rxData,6)){
 			modulestate=CompleteS;
 		}else{
-			rxSendData(tATWPPK,46);
+			rxSendData(tATWPPK,47);
 		}
 		return;
 	}
