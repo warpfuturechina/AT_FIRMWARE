@@ -84,7 +84,7 @@ unsigned char tATWPPK[]="AT+WPPK=\"<PKEY>\"\r";
 unsigned char tATWCSAS[]="AT+WCS=\"AIRKISS\"\r";
 unsigned char tATWCSAP[]="AT+WCS=\"AP\"\r";
 unsigned char tATWCC[]="AT+WCC\r";
-unsigned char tATWDS[]="AT+WDS=00,\"000200020000000000000000\"\r"	 ;
+unsigned char tATWDS[]="AT+WDS=00,\"000200020000000000000000\"\r";
 unsigned char tATWSCLOUD[]="AT+WSCLOUD\r";
 unsigned char tATWSWIFI[]="AT+WSWIFI\r";
 
@@ -153,20 +153,27 @@ int SetSendData(unsigned short tag,unsigned short length,unsigned char* value){
 }
 
 void ModuleCompleteDataProcess(){
-	if(MatchCommand( rATWDR,rxData,7)){
-		RevData();
+	if(modulestate == CompleteS){
+		if(MatchCommand( rATWDR,rxData,7)){
+			RevData();
+		}
+		return;
 	}
 	if(MatchCommand( rATWIFICONN,rxData,21)){
 		//Wi-Fi连接完成
+		return;
 	}
 	if(MatchCommand( rATWIFIDISCONN,rxData,24)){
 		//Wi-Fi连接失败
+		return;
 	}
 	if(MatchCommand( rATCLOUDCONN,rxData,22)){
 		//云端连接完成
+		return;
 	}
 	if(MatchCommand( rATCLOUDDISCONN,rxData,25)){
 		//云端连接失败
+		return;
 	}
 }
 void ModuleProcess(){
@@ -195,10 +202,9 @@ void ModuleProcess(){
 		}
 		return;
 	}
-	if(modulestate == CompleteS){
-		ModuleCompleteDataProcess();
-		return;
-	}
+
+	ModuleCompleteDataProcess();
+
 }
 
 //客户实现该方法，串口发送数据给模块
