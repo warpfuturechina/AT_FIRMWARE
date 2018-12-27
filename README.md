@@ -7,32 +7,32 @@ git clone 项目，解压<strong>at_firmware_build.zip</strong>
 
 解压后可获得以下文件:
 
-* bootloader.bin
 * flash.sh
+* bootloader.bin
 * partitions_two_ota.bin
 * wf_at_firmware.bin
 
 ### 2. 修改烧录参数
 
-打开`flash.sh`文件，如下所示：
+<strong>打开`flash.sh`文件，如下：</strong>
 
 `python2 $IDF_PATH/components/esptool_py/esptool/esptool.py --chip esp8266 --port /dev/ttyUSB0 --baud 115200 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size 2MB 0x0000 bootloader.bin 0x10000 wf_at_firmware.bin 0x8000 partitions_two_ota.bin`
 
-修改串口：
 
-根据模块当前所在环境，获取串口并修改 `--port /dev/ttyUSB0`
+<strong>串口</strong>:  `--port /dev/ttyUSB0`
 
-波特率 `--baud 115200`
+<strong>波特率</strong>: `--baud 115200`
 
-flash 大小 `--flash_size 2MB`
+<strong>flash</strong>: `--flash_size 2MB`
 
-bootloader.bin `0x0000`
+<strong>bootloader.bin</strong>:  `0x0000`
 
-wf_at_firmware.bin `0x10000`
+<strong>wf_at_firmware.bin</strong>:  `0x10000`
 
-partitions_two_ota.bin `0x8000`
+<strong>partitions_two_ota.bin</strong>:  `0x8000`
 
-查看模块串口，可以在命令行工具输入:
+
+烧录查看模块串口，命令行工具输入:
 <br>
 > `cd /dev`
 > <br>
@@ -48,7 +48,7 @@ partitions_two_ota.bin `0x8000`
 
 先切换并进入到`at_firmware_build`所在文件夹，即`flash.sh`文件所在目录
 
-> cd xxx/sdk/at_firmware_build
+> cd ~/project/at_firmware_build
 
 执行烧录脚本
 
