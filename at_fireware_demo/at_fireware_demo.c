@@ -224,7 +224,12 @@ int RevDataProcess(unsigned short tag,unsigned short length,unsigned char* value
 	printf("%d %d %x\n", tag, length , value[0]);
 	if(tag == 0x01){
 		SetSendData(3,5,"4FFFF");
-		rxSendData(tATWDS, 38 ); //发送TLV上报数据
+		
+		/** 
+		 * 需要根据unsigned char tATWDS[]="AT+WDS=16,\"00020002000000000000000000000000\"\r"; 
+		 * 中的 AT+WDS=16,\"00020002000000000000000000000000\"\r 计算转hex之后的字节数修改<45>的值
+		 */
+		rxSendData(tATWDS, 45 ); // 需要根据发送TLV上报数据
 	}
 	if(tag == 0x02){
 
