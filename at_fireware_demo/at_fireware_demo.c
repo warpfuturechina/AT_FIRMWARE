@@ -89,7 +89,7 @@ unsigned char tATWPPK[]="AT+WPPK=\"b784118c-a9bf-4720-81f5-4dc7154cd23a\"\r";
 unsigned char tATWCSAS[]="AT+WCS=\"AIRKISS\"\r";
 unsigned char tATWCSAP[]="AT+WCS=\"AP\"\r";
 unsigned char tATWCC[]="AT+WCC\r";
-unsigned char tATWDS[]="AT+WDS=12,\"000200020000000000000000\"\r";
+unsigned char tATWDS[]="AT+WDS=16,\"00020002000000000000000000000000\"\r"; // 需要根据00FF决定最长数据的字节长度
 unsigned char tATWSCLOUD[]="AT+WSCLOUD\r";
 unsigned char tATWSWIFI[]="AT+WSWIFI\r";
 
