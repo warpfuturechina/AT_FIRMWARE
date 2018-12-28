@@ -227,7 +227,7 @@ int RevDataProcess(unsigned short tag,unsigned short length,unsigned char* value
 		
 		/** 
 		 * 需要根据unsigned char tATWDS[]="AT+WDS=16,\"00020002000000000000000000000000\"\r"; 
-		 * 中的 AT+WDS=16,\"00020002000000000000000000000000\"\r 计算转hex之后的字节数修改<45>的值
+		 * 中的 AT+WDS=16,\"00020002000000000000000000000000\"\r 计算转hex之后的字节数作为参数，当前示例取值45
 		 */
 		rxSendData(tATWDS, 45 ); // 需要根据发送TLV上报数据
 	}
