@@ -133,19 +133,19 @@ int SetSendData(unsigned short tag,unsigned short length,unsigned char* value){
 	//tATWDS[7] = atData[0];
 	//tATWDS[8] = atData[1];
 
-	ConventLen(tag >> 8 ,atData);
+	HexNum2HexStr(tag >> 8 ,atData);
 	tATWDS[11] = atData[0];
 	tATWDS[12] = atData[1];
 
-	ConventLen(tag & 0xff ,atData);
+	HexNum2HexStr(tag & 0xff ,atData);
 	tATWDS[13] = atData[0];
 	tATWDS[14] = atData[1];
 
-	ConventLen(length >> 8 ,atData);
+	HexNum2HexStr(length >> 8 ,atData);
 	tATWDS[15] = atData[0];
 	tATWDS[16] = atData[1];
 
-	ConventLen(length & 0xff ,atData);
+	HexNum2HexStr(length & 0xff ,atData);
 	tATWDS[17] = atData[0];
 	tATWDS[18] = atData[1];
 
@@ -223,12 +223,7 @@ int RevDataProcess(unsigned short tag,unsigned short length,unsigned char* value
 	//todo
 	printf("%d %d %x\n", tag, length , value[0]);
 	if(tag == 0x01){
-		SetSendData(3,5,"4FFFF");
-		
-		/** 
-		 * 需要根据unsigned char tATWDS[]="AT+WDS=16,\"00020002000000000000000000000000\"\r"; 
-		 * 中的 AT+WDS=16,\"00020002000000000000000000000000\"\r 计算转hex之后的字节数作为参数，当前示例取值45
-		 */
+		SetSendData(0xff01,5,"4FFFF");
 		rxSendData(tATWDS, 45 ); // 需要根据发送TLV上报数据
 	}
 	if(tag == 0x02){
