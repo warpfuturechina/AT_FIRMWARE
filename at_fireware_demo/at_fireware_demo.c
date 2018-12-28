@@ -83,12 +83,13 @@ enum ModuleStateEnum{
 };
 enum ModuleStateEnum modulestate=PowerOnS;
 //串口发送数据指令帧
+//#define ATWDS 12
 unsigned char tATWPPID[]="AT+WPPID=\"<PID>\"\r";
 unsigned char tATWPPK[]="AT+WPPK=\"b784118c-a9bf-4720-81f5-4dc7154cd23a\"\r";
 unsigned char tATWCSAS[]="AT+WCS=\"AIRKISS\"\r";
 unsigned char tATWCSAP[]="AT+WCS=\"AP\"\r";
 unsigned char tATWCC[]="AT+WCC\r";
-unsigned char tATWDS[]="AT+WDS=00,\"000200020000000000000000\"\r";
+unsigned char tATWDS[]="AT+WDS=12,\"000200020000000000000000\"\r";
 unsigned char tATWSCLOUD[]="AT+WSCLOUD\r";
 unsigned char tATWSWIFI[]="AT+WSWIFI\r";
 
@@ -128,9 +129,9 @@ int SetSendData(unsigned short tag,unsigned short length,unsigned char* value){
 	unsigned short atlen = 4 + length;
 	unsigned char atData[2];//复用数据
 	int loop=0;
-	ConventLen(atlen,atData);
-	tATWDS[7] = atData[0];
-	tATWDS[8] = atData[1];
+	//ConventLen(atlen,atData);
+	//tATWDS[7] = atData[0];
+	//tATWDS[8] = atData[1];
 
 	ConventLen(tag >> 8 ,atData);
 	tATWDS[11] = atData[0];
