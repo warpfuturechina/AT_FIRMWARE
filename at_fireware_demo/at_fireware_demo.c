@@ -1,6 +1,6 @@
 /**
 @author kj021320
-@version 3.1
+@version 3.2
 **/
 #include <stdio.h>
 int RevDataProcess(unsigned short tag,unsigned short length,unsigned char* value);
@@ -89,9 +89,10 @@ unsigned char tATWPPK[]="AT+WPPK=\"b784118c-a9bf-4720-81f5-4dc7154cd23a\"\r";
 unsigned char tATWCSAS[]="AT+WCS=\"AIRKISS\"\r";
 unsigned char tATWCSAP[]="AT+WCS=\"AP\"\r";
 unsigned char tATWCC[]="AT+WCC\r";
-unsigned char tATWDS[]="AT+WDS=16,\"00020002000000000000000000000000\"\r"; // 需要根据00FF决定最长数据的字节长度
+unsigned char tATWDS[]="AT+WDS=16,\"0002 0002 0000  0000 0000 0000 0000 0000\"\r"; // 需要根据00FF决定最长数据的字节长度
 unsigned char tATWSCLOUD[]="AT+WSCLOUD\r";
 unsigned char tATWSWIFI[]="AT+WSWIFI\r";
+unsigned char tATWFT[]="AT+WFT=\"WFT\",\"12345678\"\r"; //产测指令
 
 //串口接收数据指令帧
 unsigned char rATREADY[]="\r\nready\r\n";
@@ -101,12 +102,14 @@ unsigned char rATWIFICONN[]="\r\n+WSWIFI=CONNECTED\r\n";
 unsigned char rATWIFIDISCONN[]="\r\n+WSWIFI=DISCONNECTED\r\n";
 unsigned char rATCLOUDCONN[]="\r\n+WSCLOUD=CONNECTED\r\n";
 unsigned char rATCLOUDDISCONN[]="\r\n+WSCLOUD=DISCONNECTED\r\n";
+unsigned char rATWFTTIMEOUT[]="\r\n+WFT=TIMEOUT\r\n"; //匹配到产测
+unsigned char rATWFTPASS[]="\r\n+WFT=PASS\r\n"; //匹配到产测
+
 unsigned char rATWDR[]="\r\n+WDR=";
 
 //串口读取的数据buffer
 #define RXLEN 50
 unsigned char rxData[RXLEN]="\r\n+WDR=05,\"0001000200\"\r\n"	;
-
 // TLV的V数据
 unsigned char tlvValue[8];//暂定长度，有需要自己调整
 
@@ -123,7 +126,6 @@ int RevData(){
 	i = RevDataProcess( tag, len, tlvValue );
 	return i;
 }
-
 //设置发送云端的TLV数据
 int SetSendData(unsigned short tag,unsigned short length,unsigned char* value){
 	unsigned short atlen = 4 + length;
@@ -132,7 +134,6 @@ int SetSendData(unsigned short tag,unsigned short length,unsigned char* value){
 	//ConventLen(atlen,atData);
 	//tATWDS[7] = atData[0];
 	//tATWDS[8] = atData[1];
-
 	HexNum2HexStr(tag >> 8 ,atData);
 	tATWDS[11] = atData[0];
 	tATWDS[12] = atData[1];
@@ -156,7 +157,6 @@ int SetSendData(unsigned short tag,unsigned short length,unsigned char* value){
 	}
 	return 1;
 }
-
 void ModuleCompleteDataProcess(){
 	if(modulestate == CompleteS){
 		if(MatchCommand( rATWDR,rxData,7)){
@@ -180,6 +180,16 @@ void ModuleCompleteDataProcess(){
 		//云端连接失败
 		return;
 	}
+	/*
+	if(MatchCommand( rATWFTTIMEOUT,rxData,16)){
+		//匹配到产测失败
+		return;
+	}
+	if(MatchCommand( rATWFTPASS,rxData,13)){
+		//匹配到产测成功
+		return;
+	}
+	*/
 }
 void ModuleProcess(){
 	//if(modulestate == PowerOnS ){
@@ -207,17 +217,79 @@ void ModuleProcess(){
 		}
 		return;
 	}
-
 	ModuleCompleteDataProcess();
-
 }
-
+//int serindex = 0;
+//unsigned char testsdata[] = "aaa\r\n\r\r\nOK\r\naa";
+unsigned char readSerialByte(){
+	//客户实现该方法，判断串口中断读取一个字节数
+	//return testsdata[serindex++];
+	return 0x00;
+}
+unsigned short serialSkip = 0;
+//指令帧状态匹配
+enum CFMStateEnum{
+	FRAME_OVER,
+	FRAME_HEADER_MATCHED,//帧头1match完成
+	FRAME_BODY,//帧匹配开始
+	FRAME_TAIL1_MATCHED//帧尾部
+};
+enum CFMStateEnum cfm=FRAME_OVER;
+/**
+	返回 >0 读取成功，发现帧，返回帧长度
+	返回 0 读取失败
+**/
+int CommandFrameProcess(){
+	int frameSize = 0;
+	rxData[serialSkip] = readSerialByte();
+	if(cfm==FRAME_OVER ){
+		if(rxData[serialSkip] == 0x0d){
+			cfm = FRAME_HEADER_MATCHED;
+		}else{
+			serialSkip = 0;
+			return 0;
+		}
+	}else if(cfm == FRAME_HEADER_MATCHED ){
+		if(rxData[serialSkip] == 0x0a){
+			cfm = FRAME_BODY;
+		}else if(rxData[serialSkip] == 0x0d){
+			rxData[serialSkip-1] = 0x0d;
+			return 0;
+		}else{
+			cfm = FRAME_OVER;
+			serialSkip = 0;
+			return 0;
+		}
+	}else if(cfm == FRAME_BODY ){
+		if(rxData[serialSkip] == 0x0d){
+			cfm = FRAME_TAIL1_MATCHED;
+		}
+	}else if(cfm == FRAME_TAIL1_MATCHED){
+		if(rxData[serialSkip] == 0x0a){
+			frameSize = serialSkip+1;
+			//发现帧数据小于6做容错处理
+			if(frameSize<6){
+				serialSkip = 2;
+				rxData[0]= 0x0d;
+				rxData[1]= 0x0a;
+				cfm = FRAME_BODY;
+				return 0;
+			}
+			serialSkip = 0;
+			cfm = FRAME_OVER;
+			return frameSize;
+		}else if(rxData[serialSkip] != 0x0d){
+			cfm = FRAME_BODY;
+		}
+	}
+	serialSkip ++ ;
+	return 0;
+}
 //客户实现该方法，串口发送数据给模块
 void rxSendData(unsigned char* value,unsigned char len){
 	//客户实现该方法，串口发送数据给模块
 	printf("%s\n",value);
 }
-
 //客户实现该方法，接收模块的数据
 int RevDataProcess(unsigned short tag,unsigned short length,unsigned char* value){
 	//todo
@@ -227,15 +299,34 @@ int RevDataProcess(unsigned short tag,unsigned short length,unsigned char* value
 		rxSendData(tATWDS, 45 ); // 需要根据发送TLV上报数据
 	}
 	if(tag == 0x02){
-
 	}
 	return 0;
 }
 
 int main(){
-	modulestate = CompleteS;
-	printf("%s\n",rxData);
+	//readSerialByte 客户实现该方法读取串口数据
+	//rxSendData	客户实现该方法往串口写数据
+	//RevDataProcess 客户实现该方法 处理TLV 数据
+	//ModuleCompleteDataProcess 客户可补全里面 Wi-Fi模块和网络状态解析处理
+	//RXLEN 客户可修改 该宏，调整串口帧数据buffer size
+	//tlvValue 客户可修改，此值的数据buffer size
 
+	/**
+	int frameSize = 0;
+	int interruptSignal = 0;
+	if(interruptSignal){
+		//接收到串口中断，调用CommandFrameProcess，处理帧数据，解析帧头帧尾，完成解析之后会把数据放到rxData中
+		int frameSize = CommandFrameProcess();
+		if(frameSize > 0){
+			printf("%s",rxData);
+		}
+	}
+
+	//获取完成之后，调用解析帧内容，代码会自动处理TLV解析和AT指令帧解析
+
+	modulestate = CompleteS;
 	ModuleProcess();
+	*/
+
 	return 0;
 }
