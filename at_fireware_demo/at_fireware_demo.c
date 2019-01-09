@@ -86,10 +86,10 @@ enum ModuleStateEnum modulestate=PowerOnS;
 //#define ATWDS 12
 unsigned char tATWPPID[]="AT+WPPID=\"<PID>\"\r";
 unsigned char tATWPPK[]="AT+WPPK=\"b784118c-a9bf-4720-81f5-4dc7154cd23a\"\r";
-unsigned char tATWCSAS[]="AT+WCS=\"AIRKISS\"\r";
-unsigned char tATWCSAP[]="AT+WCS=\"AP\"\r";
+unsigned char tATWCSAS[]="AT+WCS=\"AIRKISS\",600,true\r";
+unsigned char tATWCSAP[]="AT+WCS=\"AP\",600,true\r";
 unsigned char tATWCC[]="AT+WCC\r";
-unsigned char tATWDS[]="AT+WDS=16,\"0002 0002 0000  0000 0000 0000 0000 0000\"\r"; // 需要根据00FF决定最长数据的字节长度
+unsigned char tATWDS[]="AT+WDS=16,\"00020002000000000000000000000000\"\r"; // 需要根据00FF决定最长数据的字节长度
 unsigned char tATWSCLOUD[]="AT+WSCLOUD\r";
 unsigned char tATWSWIFI[]="AT+WSWIFI\r";
 unsigned char tATWFT[]="AT+WFT=\"WFT\",\"12345678\"\r"; //产测指令
@@ -102,6 +102,7 @@ unsigned char rATWIFICONN[]="\r\n+WSWIFI=CONNECTED\r\n";
 unsigned char rATWIFIDISCONN[]="\r\n+WSWIFI=DISCONNECTED\r\n";
 unsigned char rATCLOUDCONN[]="\r\n+WSCLOUD=CONNECTED\r\n";
 unsigned char rATCLOUDDISCONN[]="\r\n+WSCLOUD=DISCONNECTED\r\n";
+unsigned char rATWCSTIMEOUT[]="\r\n+WCS=TIMEOUT\r\n"; //配网TIMEOUT
 unsigned char rATWFTTIMEOUT[]="\r\n+WFT=TIMEOUT\r\n"; //匹配到产测
 unsigned char rATWFTPASS[]="\r\n+WFT=PASS\r\n"; //匹配到产测
 
@@ -178,6 +179,10 @@ void ModuleCompleteDataProcess(){
 	}
 	if(MatchCommand( rATCLOUDDISCONN,rxData,25)){
 		//云端连接失败
+		return;
+	}
+	if(MatchCommand( rATWCSTIMEOUT,rxData,16)){
+		//配网失败
 		return;
 	}
 	/*
