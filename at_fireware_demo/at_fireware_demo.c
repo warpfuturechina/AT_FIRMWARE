@@ -84,33 +84,35 @@ enum ModuleStateEnum{
 enum ModuleStateEnum modulestate=PowerOnS;
 //串口发送数据指令帧
 //#define ATWDS 12
-unsigned char tATWPPID[]="AT+WPPID=\"00000000000000000000000000000000\"\r";   // 注：需要从对接交付文档/平台控制台中获取并”替换掉“PID
-unsigned char tATWPPK[]="AT+WPPK=\"00000000-0000-0000-0000-000000000000\"\r"; // 注：需要从对接交付文档/平台控制台中获取并”替换掉“PKEY
-unsigned char tATWCSAS[]="AT+WCS=\"AIRKISS\",600,true\r";
-unsigned char tATWCSAP[]="AT+WCS=\"AP\",600,true\r";
-unsigned char tATWCC[]="AT+WCC\r";
-unsigned char tATWDS[]="AT+WDS=16,\"00020002000000000000000000000000\"\r"; // 需要根据00FF决定最长数据的字节长度
-unsigned char tATWSCLOUD[]="AT+WSCLOUD\r";
-unsigned char tATWSWIFI[]="AT+WSWIFI\r";
-unsigned char tATWFT[]="AT+WFT=\"WFT\",\"12345678\"\r"; //产测指令
+unsigned char tAThead[]="AT+";
+unsigned char tATtail[]="\r";
+unsigned char tATWPPID[]="WPPID=\"00000000000000000000000000000000\"";// 注：需要从对接交付文档/平台控制台中获取并”替换掉“PID
+unsigned char tATWPPK[]="WPPK=\"00000000-0000-0000-0000-000000000000\"";// 注：需要从对接交付文档/平台控制台中获取并”替换掉“PKEY
+unsigned char tATWCSAS[]="WCS=\"AIRKISS\",600,true";
+unsigned char tATWCSAP[]="WCS=\"AP\",600,true";
+unsigned char tATWCC[]="WCC";
+unsigned char tATWDS[]="WDS=16,\"00020002000000000000000000000000\""; // 需要根据00FF决定最长数据的字节长度
+unsigned char tATWSCLOUD[]="WSCLOUD";
+unsigned char tATWSWIFI[]="WSWIFI";
+unsigned char tATWFT[]="WFT=\"WFT\",\"12345678\""; //产测指令
 
 //串口接收数据指令帧
-unsigned char rATREADY[]="\r\nready\r\n";
-unsigned char rATOK[]="\r\nOK\r\n";
-unsigned char rATERROR[]="\r\nERROR\r\n";
-unsigned char rATWIFICONN[]="\r\n+WSWIFI=CONNECTED\r\n";
-unsigned char rATWIFIDISCONN[]="\r\n+WSWIFI=DISCONNECTED\r\n";
-unsigned char rATCLOUDCONN[]="\r\n+WSCLOUD=CONNECTED\r\n";
-unsigned char rATCLOUDDISCONN[]="\r\n+WSCLOUD=DISCONNECTED\r\n";
-unsigned char rATWCSTIMEOUT[]="\r\n+WCS=TIMEOUT\r\n"; //配网TIMEOUT
-unsigned char rATWFTTIMEOUT[]="\r\n+WFT=TIMEOUT\r\n"; //匹配到产测
-unsigned char rATWFTPASS[]="\r\n+WFT=PASS\r\n"; //匹配到产测
-
-unsigned char rATWDR[]="\r\n+WDR=";
+unsigned char rATREADY[]="ready";
+unsigned char rATOK[]="OK";
+unsigned char rATERROR[]="ERROR";
+unsigned char rATWIFICONN[]="+WSWIFI=CONNECTED";
+unsigned char rATWIFIDISCONN[]="+WSWIFI=DISCONNECTED";
+unsigned char rATCLOUDCONN[]="+WSCLOUD=CONNECTED";
+unsigned char rATCLOUDDISCONN[]="+WSCLOUD=DISCONNECTED";
+unsigned char rATWCSTIMEOUT[]="+WCS=TIMEOUT"; //配网TIMEOUT
+unsigned char rATWFTTIMEOUT[]="+WFT=TIMEOUT"; //匹配到产测
+unsigned char rATWFTPASS[]="+WFT=PASS"; //匹配到产测
+unsigned char rATWDR[]="+WDR=";
 
 //串口读取的数据buffer
 #define RXLEN 50
-unsigned char rxData[RXLEN]="\r\n+WDR=05,\"0001000200\"\r\n"	;
+unsigned char rxData[RXLEN]="\r\n+WDR=05,\"0001000200\"\r\n";
+unsigned char* rxDataFramePayload = rxData+2;
 // TLV的V数据
 unsigned char tlvValue[8];//暂定长度，有需要自己调整
 
@@ -165,37 +167,37 @@ int SetSendData(unsigned short tag,unsigned short length,unsigned char* value){
 }
 void ModuleCompleteDataProcess(){
 	if(modulestate == CompleteS){
-		if(MatchCommand( rATWDR,rxData,7)){
+		if(MatchCommand( rATWDR,rxDataFramePayload,5)){
 			RevData();
 		}
 		return;
 	}
-	if(MatchCommand( rATWIFICONN,rxData,21)){
+	if(MatchCommand( rATWIFICONN,rxDataFramePayload,17)){
 		//Wi-Fi连接完成，客户可填充自己需要的代码，例如指示灯
 		return;
 	}
-	if(MatchCommand( rATWIFIDISCONN,rxData,24)){
+	if(MatchCommand( rATWIFIDISCONN,rxDataFramePayload,20)){
 		//Wi-Fi连接失败，客户可填充自己需要的代码，例如指示灯
 		return;
 	}
-	if(MatchCommand( rATCLOUDCONN,rxData,22)){
+	if(MatchCommand( rATCLOUDCONN,rxDataFramePayload,18)){
 		//云端连接完成，客户可填充自己需要的代码，例如指示灯
 		return;
 	}
-	if(MatchCommand( rATCLOUDDISCONN,rxData,25)){
+	if(MatchCommand( rATCLOUDDISCONN,rxDataFramePayload,21)){
 		//云端连接失败，客户可填充自己需要的代码，例如指示灯
 		return;
 	}
-	if(MatchCommand( rATWCSTIMEOUT,rxData,16)){
+	if(MatchCommand( rATWCSTIMEOUT,rxDataFramePayload,12)){
 		//配网失败，客户可填充自己需要的代码，例如指示灯
 		return;
 	}
 	/*
-	if(MatchCommand( rATWFTTIMEOUT,rxData,16)){
+	if(MatchCommand( rATWFTTIMEOUT,rxDataFramePayload,12)){
 		//匹配到产测失败
 		return;
 	}
-	if(MatchCommand( rATWFTPASS,rxData,13)){
+	if(MatchCommand( rATWFTPASS,rxDataFramePayload,9)){
 		//匹配到产测成功
 		return;
 	}
@@ -204,8 +206,8 @@ void ModuleCompleteDataProcess(){
 void ModuleProcess(){
 	//if(modulestate == PowerOnS ){
 	//考虑模块有可能自动OTA 或者自动复位，匹配到ready指令
-	if(MatchCommand( rATREADY,rxData,9)){
-		rxSendData(tATWPPID,44);
+	if(MatchCommand( rATREADY,rxDataFramePayload,5)){
+		rxSendData(tATWPPID,40);
 		modulestate=PidS;
 		return;
 	}
@@ -213,21 +215,21 @@ void ModuleProcess(){
 	//模块当下状态为发送完成PID
 	if(modulestate == PidS){
 		//等待反馈OK指令，如果匹配成功OK指令，则发送PK，否则重发PID
-		if(MatchCommand( rATOK,rxData,6)){
-			rxSendData(tATWPPK,47);
+		if(MatchCommand( rATOK,rxDataFramePayload,2)){
+			rxSendData(tATWPPK,43);
 			modulestate=PkS;
 		}else{
-			rxSendData(tATWPPID,44);
+			rxSendData(tATWPPID,40);
 		}
 		return;
 	}
 	//模块当下状态为发送完成PK
 	if(modulestate == PkS){
 		//等待反馈OK指令，如果匹配成功OK指令，模块设置完成，否则重发PK
-		if(MatchCommand( rATOK,rxData,6)){
+		if(MatchCommand( rATOK,rxDataFramePayload,2)){
 			modulestate=CompleteS;
 		}else{
-			rxSendData(tATWPPK,47);
+			rxSendData(tATWPPK,43);
 		}
 		return;
 	}
@@ -310,15 +312,17 @@ int CommandFrameProcess(){
 //客户实现该方法，串口发送数据给模块
 void rxSendData(unsigned char* value,unsigned char len){
 	//客户实现该方法，串口发送数据给模块
-	printf("%s\n",value);
+	printf("%s%s%s\n",tAThead,value,tATtail);
+	//printf("%s",value);
 }
 //客户实现该方法，接收模块的数据
 int RevDataProcess(unsigned short tag,unsigned short length,unsigned char* value){
 	//todo
 	printf("%d %d %x\n", tag, length , value[0]);
+	unsigned char v[] = {0x05,0x04,0x03,0x02,0x01};
 	if(tag == 0x01){
-		SetSendData(0xff01,5,"4FFFF");
-		rxSendData(tATWDS, 45 ); // 需要根据发送TLV上报数据
+		SetSendData(0xff01,5,v);
+		rxSendData(tATWDS, 41 ); // 需要根据发送TLV上报数据
 	}
 	if(tag == 0x02){
 	}
@@ -326,6 +330,7 @@ int RevDataProcess(unsigned short tag,unsigned short length,unsigned char* value
 }
 
 int main(){
+
 	//readSerialByte 客户实现该方法读取串口数据
 	//rxSendData	客户实现该方法往串口写数据
 	//RevDataProcess 客户实现该方法 处理TLV 数据
