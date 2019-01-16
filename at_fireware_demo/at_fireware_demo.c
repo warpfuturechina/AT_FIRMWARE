@@ -84,30 +84,31 @@ enum ModuleStateEnum{
 enum ModuleStateEnum modulestate=PowerOnS;
 //串口发送数据指令帧
 //#define ATWDS 12
-unsigned char tAThead[]="AT+";
-unsigned char tATtail[]="\r";
+unsigned char tAThead []="AT+";
+unsigned char tATtail []="\r";
 unsigned char tATWPPID[]="WPPID=\"00000000000000000000000000000000\"";// 注：需要从对接交付文档/平台控制台中获取并”替换掉“PID
-unsigned char tATWPPK[]="WPPK=\"00000000-0000-0000-0000-000000000000\"";// 注：需要从对接交付文档/平台控制台中获取并”替换掉“PKEY
-unsigned char tATWCSAS[]="WCS=\"AIRKISS\",600,true";
-unsigned char tATWCSAP[]="WCS=\"AP\",600,true";
-unsigned char tATWCC[]="WCC";
-unsigned char tATWDS[]="WDS=16,\"00020002000000000000000000000000\""; // 需要根据00FF决定最长数据的字节长度
+unsigned char tATWPPK []="WPPK=\"00000000-0000-0000-0000-000000000000\"";// 注：需要从对接交付文档/平台控制台中获取并”替换掉“PKEY
+unsigned char tATWCSAS[]="WCS=\"AIRKISS\"";
+unsigned char tATWCSAP[]="WCS=\"AP\"";
+unsigned char tATWCSPA[]=",600,true";
+unsigned char tATWCC  []="WCC";
+unsigned char tATWDS  []="WDS=16,\"00020002000000000000000000000000\""; // 需要根据00FF决定最长数据的字节长度
 unsigned char tATWSCLOUD[]="WSCLOUD";
 unsigned char tATWSWIFI[]="WSWIFI";
-unsigned char tATWFT[]="WFT=\"WFT\",\"12345678\""; //产测指令
+unsigned char tATWFT  []="WFT=\"WFT\",\"12345678\""; //产测指令
 
 //串口接收数据指令帧
-unsigned char rATREADY[]="ready";
-unsigned char rATOK[]="OK";
-unsigned char rATERROR[]="ERROR";
-unsigned char rATWIFICONN[]="+WSWIFI=CONNECTED";
-unsigned char rATWIFIDISCONN[]="+WSWIFI=DISCONNECTED";
-unsigned char rATCLOUDCONN[]="+WSCLOUD=CONNECTED";
-unsigned char rATCLOUDDISCONN[]="+WSCLOUD=DISCONNECTED";
-unsigned char rATWCSTIMEOUT[]="+WCS=TIMEOUT"; //配网TIMEOUT
-unsigned char rATWFTTIMEOUT[]="+WFT=TIMEOUT"; //匹配到产测
-unsigned char rATWFTPASS[]="+WFT=PASS"; //匹配到产测
-unsigned char rATWDR[]="+WDR=";
+unsigned char rATREADY[]=			"r";//ready
+unsigned char rATOK[]=				"O";//OK
+//unsigned char rATERROR[]=			"E";//ERROR
+unsigned char rATWIFICONN[]=	"+WSWIFI=C";//+WSWIFI=CONNECTED
+unsigned char rATWIFIDISCONN[]="+WSWIFI=D";//+WSWIFI=DISCONNECTED
+unsigned char rATCLOUDCONN[]=	"+WSCLOUD=C";//+WSCLOUD=CONNECTED
+unsigned char rATCLOUDDISCONN[]="+WSCLOUD=D";//+WSCLOUD=DISCONNECTED
+unsigned char rATWCSTIMEOUT[]="+WCS=T"; //配网TIMEOUT +WCS=TIMEOUT
+unsigned char rATWFTTIMEOUT[]="+WFT=T"; //匹配到产测超时 +WFT=TIMEOUT
+unsigned char rATWFTPASS[]=		"+WFT=P"; //匹配到产测完成 +WFT=PASS
+unsigned char rATWDR[]=				"+WDR="; // 云端数据
 
 //串口读取的数据buffer
 #define RXLEN 50
@@ -172,23 +173,23 @@ void ModuleCompleteDataProcess(){
 		}
 		return;
 	}
-	if(MatchCommand( rATWIFICONN,rxDataFramePayload,17)){
+	if(MatchCommand( rATWIFICONN,rxDataFramePayload,9)){
 		//Wi-Fi连接完成，客户可填充自己需要的代码，例如指示灯
 		return;
 	}
-	if(MatchCommand( rATWIFIDISCONN,rxDataFramePayload,20)){
+	if(MatchCommand( rATWIFIDISCONN,rxDataFramePayload,9)){
 		//Wi-Fi连接失败，客户可填充自己需要的代码，例如指示灯
 		return;
 	}
-	if(MatchCommand( rATCLOUDCONN,rxDataFramePayload,18)){
+	if(MatchCommand( rATCLOUDCONN,rxDataFramePayload,10)){
 		//云端连接完成，客户可填充自己需要的代码，例如指示灯
 		return;
 	}
-	if(MatchCommand( rATCLOUDDISCONN,rxDataFramePayload,21)){
+	if(MatchCommand( rATCLOUDDISCONN,rxDataFramePayload,10)){
 		//云端连接失败，客户可填充自己需要的代码，例如指示灯
 		return;
 	}
-	if(MatchCommand( rATWCSTIMEOUT,rxDataFramePayload,12)){
+	if(MatchCommand( rATWCSTIMEOUT,rxDataFramePayload,6)){
 		//配网失败，客户可填充自己需要的代码，例如指示灯
 		return;
 	}
@@ -206,7 +207,7 @@ void ModuleCompleteDataProcess(){
 void ModuleProcess(){
 	//if(modulestate == PowerOnS ){
 	//考虑模块有可能自动OTA 或者自动复位，匹配到ready指令
-	if(MatchCommand( rATREADY,rxDataFramePayload,5)){
+	if(MatchCommand( rATREADY,rxDataFramePayload,1)){
 		rxSendData(tATWPPID,40);
 		modulestate=PidS;
 		return;
@@ -215,7 +216,7 @@ void ModuleProcess(){
 	//模块当下状态为发送完成PID
 	if(modulestate == PidS){
 		//等待反馈OK指令，如果匹配成功OK指令，则发送PK，否则重发PID
-		if(MatchCommand( rATOK,rxDataFramePayload,2)){
+		if(MatchCommand( rATOK,rxDataFramePayload,1)){
 			rxSendData(tATWPPK,43);
 			modulestate=PkS;
 		}else{
@@ -226,7 +227,7 @@ void ModuleProcess(){
 	//模块当下状态为发送完成PK
 	if(modulestate == PkS){
 		//等待反馈OK指令，如果匹配成功OK指令，模块设置完成，否则重发PK
-		if(MatchCommand( rATOK,rxDataFramePayload,2)){
+		if(MatchCommand( rATOK,rxDataFramePayload,1)){
 			modulestate=CompleteS;
 		}else{
 			rxSendData(tATWPPK,43);
