@@ -1,25 +1,36 @@
 /**
 @author kj021320
-@version 3.2
+@version 3.3
 **/
 #include <stdio.h>
 int RevDataProcess(unsigned short tag,unsigned short length,unsigned char* value);
-void rxSendData(unsigned char* value,unsigned char len);
+void rxSendData(const unsigned char* value,unsigned char len);
+
+int Num2Char(unsigned char somechar){
+	//不做校验，节省代码；如需要做校验，请参考注释代码
+	return somechar - '0';
+}
+unsigned char Char2Num(int n){
+	//不做校验，节省代码；如需要做校验，请参考注释代码
+	return n+'0';
+}
+/*
 int Num2Char(unsigned char somechar){
 	 return (somechar >= '0' && somechar <= '9') ? (somechar - '0') : -1;
 }
 unsigned char Char2Num(int n){
 	return ( n<0 || n>9 )? 0 : n+'0';
 }
+*/
 //只支持2个字节，把字符串数字转换int数值
 int GetLen(unsigned char h,unsigned char l){
 	int hn = Num2Char(h); //高位
 	int ln = Num2Char(l); //低位
-	if(hn == -1 && ln == -1 ){
+	if(hn  < 0 && ln  < 0 ){
 		return -1;
-	}else if(hn == -1){
+	}else if(hn < 0){
 		return ln;
-	}else if(ln == -1){
+	}else if(ln  < 0){
 		return hn;
 	}else{
 		return hn*10 + ln;
@@ -48,11 +59,7 @@ unsigned char hc2hn(unsigned char hc){
 }
 // hexnum to hexchar
 unsigned char hn2hc(unsigned char hn){
-	if(hn<10 ){
-		return hn+'0';
-	}else{
-		return hn-10+'A';
-	}
+	return hn<10 ?  hn+'0' : hn-10+'A';
 }
 //hexstring 转换为 hexnum
 unsigned char HexStr2HexNum(unsigned char left,unsigned char right){
@@ -65,8 +72,9 @@ void HexNum2HexStr(unsigned char hexnum,unsigned char* hexstr){
 	return ;
 }
 //匹配帧 数据
-int MatchCommand(unsigned char* sc,unsigned char* tc,int len){
-	for(int l=0; l<len ; l++ ){
+int MatchCommand(const unsigned char* sc,unsigned char* tc,int len){
+	int l=0;
+	for(; l<len ; l++ ){
 		if(sc[l] != tc[l]){
 			return 0;
 		}
@@ -84,35 +92,34 @@ enum ModuleStateEnum{
 enum ModuleStateEnum modulestate=PowerOnS;
 //串口发送数据指令帧
 //#define ATWDS 12
-unsigned char tAThead []="AT+";
-unsigned char tATtail []="\r";
-unsigned char tATWPPID[]="WPPID=\"00000000000000000000000000000000\"";// 注：需要从对接交付文档/平台控制台中获取并”替换掉“PID
-unsigned char tATWPPK []="WPPK=\"00000000-0000-0000-0000-000000000000\"";// 注：需要从对接交付文档/平台控制台中获取并”替换掉“PKEY
-unsigned char tATWCSAS[]="WCS=\"AIRKISS\"";
-unsigned char tATWCSAP[]="WCS=\"AP\"";
-unsigned char tATWCSPA[]=",600,true";
-unsigned char tATWCC  []="WCC";
+//const unsigned char tAThead []={'A','T','+'};
+//const unsigned char tATtail []={'\r'};
+const unsigned char tATWPPID[]="WPPID=\"00000000000000000000000000000000\"";// 注：需要从对接交付文档/平台控制台中获取并”替换掉“PID
+const unsigned char tATWPPK []="WPPK=\"00000000-0000-0000-0000-000000000000\"";// 注：需要从对接交付文档/平台控制台中获取并”替换掉“PKEY
+const unsigned char tATWCSAS[]={'W','C','S','=','"','A','I','R','K','I','S','S','"'};//WCS="AIRKISS"
+const unsigned char tATWCSAP[]={'W','C','S','=','"','A','P','"'};//WCS="AP"
+const unsigned char tATWCSPA[]={',','6','0','0',',','t','r','u','e'};//,600,true
+const unsigned char tATWCC  []={'W','C','C'}; // wcc
 unsigned char tATWDS  []="WDS=16,\"00020002000000000000000000000000\""; // 需要根据00FF决定最长数据的字节长度
-unsigned char tATWSCLOUD[]="WSCLOUD";
-unsigned char tATWSWIFI[]="WSWIFI";
-unsigned char tATWFT  []="WFT=\"WFT\",\"12345678\""; //产测指令
-
+const unsigned char tATWSCLOUD[]={'W','S','C','L','O','U','D'};
+const unsigned char tATWSWIFI[]={'W','S','W','I','F','I'};
+const unsigned char tATWFT  []={'W','F','T','=','"','W','F','T','"',',','"','1','2','3','4','5','6','7','8','"'}; //产测指令 WFT="WFT","12345678"
 //串口接收数据指令帧
-unsigned char rATREADY[]=			"r";//ready
-unsigned char rATOK[]=				"O";//OK
+const unsigned char rATREADY[]={'r'};//ready
+const unsigned char rATOK[]={'O'};//OK
 //unsigned char rATERROR[]=			"E";//ERROR
-unsigned char rATWIFICONN[]=	"+WSWIFI=C";//+WSWIFI=CONNECTED
-unsigned char rATWIFIDISCONN[]="+WSWIFI=D";//+WSWIFI=DISCONNECTED
-unsigned char rATCLOUDCONN[]=	"+WSCLOUD=C";//+WSCLOUD=CONNECTED
-unsigned char rATCLOUDDISCONN[]="+WSCLOUD=D";//+WSCLOUD=DISCONNECTED
-unsigned char rATWCSTIMEOUT[]="+WCS=T"; //配网TIMEOUT +WCS=TIMEOUT
-unsigned char rATWFTTIMEOUT[]="+WFT=T"; //匹配到产测超时 +WFT=TIMEOUT
-unsigned char rATWFTPASS[]=		"+WFT=P"; //匹配到产测完成 +WFT=PASS
-unsigned char rATWDR[]=				"+WDR="; // 云端数据
+//unsigned char rATWIFICONN[]=	"+WSWIFI=C";//+WSWIFI=CONNECTED
+//unsigned char rATWIFIDISCONN[]="+WSWIFI=D";//+WSWIFI=DISCONNECTED
+//unsigned char rATCLOUDCONN[]=	"+WSCLOUD=C";//+WSCLOUD=CONNECTED
+//unsigned char rATCLOUDDISCONN[]="+WSCLOUD=D";//+WSCLOUD=DISCONNECTED
+const unsigned char rATWCSTIMEOUT[]={'+','W','C'}; //配网TIMEOUT +WCS=TIMEOUT
+const unsigned char rATWFTTIMEOUT[]={'+','W','F','T','=','T'}; //匹配到产测超时 +WFT=TIMEOUT
+const unsigned char rATWFTPASS[]=		{'+','W','F','T','=','P'}; //匹配到产测完成 +WFT=PASS
+const unsigned char rATWDR[]=				{'+','W','D','R','='}; // 云端数据
 
 //串口读取的数据buffer
 #define RXLEN 50
-unsigned char rxData[RXLEN]="\r\n+WDR=05,\"0001000200\"\r\n";
+unsigned char rxData[RXLEN]="\r\n+WDR=05,\"0001000100\"\r\n";
 unsigned char* rxDataFramePayload = rxData+2;
 // TLV的V数据
 unsigned char tlvValue[8];//暂定长度，有需要自己调整
@@ -138,34 +145,31 @@ int RevData(){
 //设置发送云端的TLV数据
 int SetSendData(unsigned short tag,unsigned short length,unsigned char* value){
 	// atlen 是计算 AT+WDS=<len> 指令的len长度，TLV的TL为4个字节，另外加value的长度
-	unsigned short atlen = 4 + length;
-	unsigned char atData[2];//复用数据
+	//unsigned short atlen = 4 + length;
+	//unsigned char atData[2];//复用数据
 	int loop=0;
 	//ConventLen(atlen,atData);
 	//tATWDS[7] = atData[0];
 	//tATWDS[8] = atData[1];
+
 	//计算TAG数值
-	HexNum2HexStr(tag >> 8 ,atData);
-	tATWDS[11] = atData[0];
-	tATWDS[12] = atData[1];
-	HexNum2HexStr(tag & 0xff ,atData);
-	tATWDS[13] = atData[0];
-	tATWDS[14] = atData[1];
+	HexNum2HexStr(tag >> 8 ,tATWDS+8);
+	HexNum2HexStr(tag & 0xff ,tATWDS+10);
 	//计算Length数值
-	HexNum2HexStr(length >> 8 ,atData);
-	tATWDS[15] = atData[0];
-	tATWDS[16] = atData[1];
-	HexNum2HexStr(length & 0xff ,atData);
-	tATWDS[17] = atData[0];
-	tATWDS[18] = atData[1];
+	HexNum2HexStr(length >> 8 ,tATWDS+12);
+	HexNum2HexStr(length >> 8 ,tATWDS+14);
+
 	//计算Value数值
 	for(;loop<length;loop++){
-		HexNum2HexStr(value[loop],atData);
-		tATWDS[19+loop*2]=atData[0];
-		tATWDS[20+loop*2]=atData[1];
+		HexNum2HexStr(value[loop], tATWDS +16+loop*2 );
 	}
 	return 1;
 }
+void AtSendTLV(unsigned short tag,unsigned short length,unsigned char* value){
+	SetSendData(tag,length,value);
+	rxSendData(tATWDS, 41 ); // 需要根据发送TLV上报数据
+}
+
 void ModuleCompleteDataProcess(){
 	if(modulestate == CompleteS){
 		if(MatchCommand( rATWDR,rxDataFramePayload,5)){
@@ -173,6 +177,7 @@ void ModuleCompleteDataProcess(){
 		}
 		return;
 	}
+	/*
 	if(MatchCommand( rATWIFICONN,rxDataFramePayload,9)){
 		//Wi-Fi连接完成，客户可填充自己需要的代码，例如指示灯
 		return;
@@ -189,10 +194,10 @@ void ModuleCompleteDataProcess(){
 		//云端连接失败，客户可填充自己需要的代码，例如指示灯
 		return;
 	}
-	if(MatchCommand( rATWCSTIMEOUT,rxDataFramePayload,6)){
+	if(MatchCommand( rATWCSTIMEOUT,rxDataFramePayload,3)){
 		//配网失败，客户可填充自己需要的代码，例如指示灯
 		return;
-	}
+	}*/
 	/*
 	if(MatchCommand( rATWFTTIMEOUT,rxDataFramePayload,12)){
 		//匹配到产测失败
@@ -310,20 +315,32 @@ int CommandFrameProcess(){
 	serialSkip ++ ;
 	return 0;
 }
+
 //客户实现该方法，串口发送数据给模块
-void rxSendData(unsigned char* value,unsigned char len){
+void serialSend(unsigned char data){
+	printf("%c",data);
 	//客户实现该方法，串口发送数据给模块
-	printf("%s%s%s\n",tAThead,value,tATtail);
-	//printf("%s",value);
+}
+void rxSendData(const unsigned char* value,unsigned char len){
+	//printf("%s%s%s\n",tAThead,value,tATtail);
+	//tAThead
+	serialSend('A');
+	serialSend('T');
+	serialSend('+');
+	for(unsigned char i=0;i<len;i++){
+		serialSend(value[i]);
+	}
+	//tATtail
+	serialSend('\r');
 }
 //客户实现该方法，接收模块的数据
 int RevDataProcess(unsigned short tag,unsigned short length,unsigned char* value){
 	//todo
-	printf("%d %d %x\n", tag, length , value[0]);
+	printf("TLV:%d %d %x\n", tag, length , value[0]);
 	unsigned char v[] = {0x05,0x04,0x03,0x02,0x01};
 	if(tag == 0x01){
-		SetSendData(0xff01,5,v);
-		rxSendData(tATWDS, 41 ); // 需要根据发送TLV上报数据
+		AtSendTLV(0xff,5,v); //需要根据发送TLV上报数据
+		printf("\n");
 	}
 	if(tag == 0x02){
 	}
@@ -339,9 +356,9 @@ int main(){
 	//RXLEN 客户可修改 该宏，调整串口帧数据buffer size
 	//tlvValue 客户可修改，此值的数据buffer size
 
-	/**
+	/*
 	int frameSize = 0;
-	int interruptSignal = 0;
+	int interruptSignal = 1;
 	if(interruptSignal){
 		//接收到串口中断，调用CommandFrameProcess，处理帧数据，解析帧头帧尾，完成解析之后会把数据放到rxData中
 		int frameSize = CommandFrameProcess();
