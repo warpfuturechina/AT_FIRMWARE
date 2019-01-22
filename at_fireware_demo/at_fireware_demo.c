@@ -1,6 +1,6 @@
 /**
 @author kj021320
-@version 3.3
+@version 3.4
 **/
 #include <stdio.h>
 int RevDataProcess(unsigned short tag,unsigned short length,unsigned char* value);
@@ -21,7 +21,6 @@ int Num2Char(unsigned char somechar){
 unsigned char Char2Num(int n){
 	return ( n<0 || n>9 )? 0 : n+'0';
 }
-*/
 //只支持2个字节，把字符串数字转换int数值
 int GetLen(unsigned char h,unsigned char l){
 	int hn = Num2Char(h); //高位
@@ -47,6 +46,7 @@ void ConventLen(int len,unsigned char *data){
 	}
 	return ;
 }
+*/
 // hexchar to hexnum
 unsigned char hc2hn(unsigned char hc){
 	if(hc<='9' ){
