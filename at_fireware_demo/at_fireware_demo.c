@@ -5,48 +5,6 @@
 #include <stdio.h>
 int RevDataProcess(unsigned short tag,unsigned short length,unsigned char* value);
 void rxSendData(const unsigned char* value,unsigned char len);
-
-int Num2Char(unsigned char somechar){
-	//不做校验，节省代码；如需要做校验，请参考注释代码
-	return somechar - '0';
-}
-unsigned char Char2Num(int n){
-	//不做校验，节省代码；如需要做校验，请参考注释代码
-	return n+'0';
-}
-/*
-int Num2Char(unsigned char somechar){
-	 return (somechar >= '0' && somechar <= '9') ? (somechar - '0') : -1;
-}
-unsigned char Char2Num(int n){
-	return ( n<0 || n>9 )? 0 : n+'0';
-}
-//只支持2个字节，把字符串数字转换int数值
-int GetLen(unsigned char h,unsigned char l){
-	int hn = Num2Char(h); //高位
-	int ln = Num2Char(l); //低位
-	if(hn  < 0 && ln  < 0 ){
-		return -1;
-	}else if(hn < 0){
-		return ln;
-	}else if(ln  < 0){
-		return hn;
-	}else{
-		return hn*10 + ln;
-	}
-}
-//只支持2个字节，把int数值转换为字符串数字
-void ConventLen(int len,unsigned char *data){
-	if(len<10){
-		data[0] = '0'; //低位
-		data[1] = Char2Num(len); //高位
-	}else{
-		data[0] = Char2Num(len / 10 % 10); //低位
-		data[1] = Char2Num(len / 1 % 10); //高位
-	}
-	return ;
-}
-*/
 // hexchar to hexnum
 unsigned char hc2hn(unsigned char hc){
 	if(hc<='9' ){
@@ -76,10 +34,10 @@ int MatchCommand(const unsigned char* sc,unsigned char* tc,int len){
 	int l=0;
 	for(; l<len ; l++ ){
 		if(sc[l] != tc[l]){
-			return 0;
+			return 0;//没有匹配命中
 		}
 	}
-	return 1;
+	return 1;//匹配命中
 }
 
 enum ModuleStateEnum{
@@ -122,7 +80,7 @@ const unsigned char rATWDR[]=				{'+','W','D','R','='}; // 云端数据
 unsigned char rxData[RXLEN]="\r\n+WDR=05,\"0001000100\"\r\n";
 unsigned char* rxDataFramePayload = rxData+2;
 // TLV的V数据
-unsigned char tlvValue[8];//暂定长度，有需要自己调整
+unsigned char tlvValue[6];//暂定长度，有需要自己调整
 
 int RevData(){
 	//计算  \r\n+WDR=05,到底是05还是5，通过判断 rxData[8] ',' 判断
